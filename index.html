@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mobile Drawing Tool</title>
+  <style>
+    body {
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
+      font-family: Arial, sans-serif;
+    }
+
+    canvas {
+      border: 2px solid #fff;
+      border-radius: 12px;
+      touch-action: none;
+      background-color: #1e3c72;
+    }
+
+    .controls {
+      margin-bottom: 10px;
+      display: flex;
+      gap: 10px;
+    }
+
+    button {
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      background: #fff;
+      color: #333;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    button:hover {
+      background: #eee;
+    }
+
+    button.active {
+      background: #ffa500;
+      color: #fff;
+    }
+
+    button img {
+      width: 20px;
+      height: 20px;
+    }
+
+    .tooltip {
+      position: absolute;
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background-color: rgba(255, 0, 0, 0.6);
+      pointer-events: none;
+      transform: translate(-50%, -100%);
+      transition: background-color 0.3s;
+    }
+  </style>
+</head>
+<body>
+  <div class="controls">
+    <button id="pen" class="active">
+      <img src="https://img.icons8.com/material-outlined/24/000000/edit--v1.png" alt="Pen">
+    </button>
+    <button id="eraser">
+      <img src="https://img.icons8.com/material-outlined/24/000000/eraser.png" alt="Eraser">
+    </button>
+    <button id="undo">
+      <img src="https://img.icons8.com/material-outlined/24/000000/undo.png" alt="Undo">
+    </button>
+    <button id="redo">
+      <img src="https://img.icons8.com/material-outlined/24/000000/redo.png" alt="Redo">
+    </button>
+    <button id="copy">
+      <img src="https://img.icons8.com/material-outlined/24/000000/copy.png" alt="Copy">
+    </button>
+    <button id="clear">
+      <img src="https://img.icons8.com/material-outlined/24/000000/trash.png" alt="Clear">
+    </button>
+  </div>
+  <canvas id="drawingCanvas"></canvas>
+  <div id="tooltip" class="tooltip"></div>
+
+  <script>
+    const canvas = document.getElementById("drawingCanvas");
+    const ctx = canvas.getContext("2d");
+    const penButton = document.getElementById("pen");
+    const eraserButton = document.getElementById("eraser");
+    const undoButton = document.getElementById("undo");
+    const redoButton = document.getElementById("redo");
+    const copyButton = document.getElementById("copy");
+    const clearButton = document.getElementById("clear");
+    const tooltip = document.getElementById("tooltip");
+
+    // Set canvas size and scale for smooth drawing
+    const canvasWidth = 360;
+    const canvasHeight = 600;
+    const scaleFactor = 2;
+
+    canvas.width = canvasWidth * scaleFactor;
+    canvas.height = canvasHeight * scaleFactor;
+    canvas.style.width = `${canvasWidth}px`;
+    canvas.style.height = `${canvasHeight}px`;
+
+    ctx.scale(scaleFactor, scaleFactor);
+    ctx.lineCap = "round";
+    ctx.lineWidth = 5;
+
+    let drawing = false;
+    let readyToDraw = false;
+    let tool = "pen";
+    let holdTimeout;
+    const TOOLTIP_OFFSET = 50;
+
+    // Undo/Redo stacks
+    const undoStack = [];
+    const redoStack = [];
+
+    // Save current canvas state to undo stack
+    const saveState = () => {
+      undoStack.push(canvas.toDataURL());
+      redoStack.length = 0; // Clear redo stack
+    };
+
+    // Restore canvas state from an image
+    const restoreState = (state) => {
+      const img = new Image();
+      img.src = state;
+      img.onload = () => {
+        ctx.clearRect(0, 0, canvas.width / scaleFactor, canvas.height / scaleFactor);
+        ctx.drawImage(img, 0, 0, canvas.width / scaleFactor, canvas.height / scaleFactor);
+      };
+    };
+
+    const resetDrawingState = () => {
+      drawing = false;
+      readyToDraw = false;
+      clearTimeout(holdTimeout);
+      tooltip.style.backgroundColor = "rgba(255, 0, 0, 0.6)";
+    };
+
+    const getTouchPosition = (e) => {
+      const touch = e.touches[0];
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: (touch.clientX - rect.left),
+        y: (touch.clientY - rect.top) - TOOLTIP_OFFSET,
+      };
+    };
+
+    canvas.addEventListener("touchstart", (e) => {
+      resetDrawingState();
+      const { x, y } = getTouchPosition(e);
+      tooltip.style.left = `${e.touches[0].clientX}px`;
+      tooltip.style.top = `${e.touches[0].clientY - TOOLTIP_OFFSET}px`;
+      tooltip.style.display = "block";
+
+      holdTimeout = setTimeout(() => {
+        readyToDraw = true;
+        tooltip.style.backgroundColor = "rgba(0, 255, 0, 0.6)";
+      }, 1500);
+
+      saveState();
+    });
+
+    canvas.addEventListener("touchmove", (e) => {
+      const { x, y } = getTouchPosition(e);
+      tooltip.style.left = `${e.touches[0].clientX}px`;
+      tooltip.style.top = `${e.touches[0].clientY - TOOLTIP_OFFSET}px`;
+
+      if (readyToDraw) {
+        if (tool === "pen") {
+          ctx.strokeStyle = "#fff";
+        } else if (tool === "eraser") {
+          ctx.strokeStyle = "#1e3c72";
+        }
+        if (!drawing) {
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+          drawing = true;
+        } else {
+          ctx.lineTo(x, y);
+          ctx.stroke();
+        }
+      }
+    });
+
+    canvas.addEventListener("touchend", () => {
+      drawing = false;
+      tooltip.style.display = "none";
+    });
+
+    penButton.addEventListener("click", () => {
+      tool = "pen";
+      penButton.classList.add("active");
+      eraserButton.classList.remove("active");
+    });
+
+    eraserButton.addEventListener("click", () => {
+      tool = "eraser";
+      eraserButton.classList.add("active");
+      penButton.classList.remove("active");
+    });
+
+    undoButton.addEventListener("click", () => {
+      if (undoStack.length > 0) {
+        redoStack.push(canvas.toDataURL());
+        restoreState(undoStack.pop());
+      }
+    });
+
+    redoButton.addEventListener("click", () => {
+      if (redoStack.length > 0) {
+        undoStack.push(canvas.toDataURL());
+        restoreState(redoStack.pop());
+      }
+    });
+
+    copyButton.addEventListener("click", async () => {
+      canvas.toBlob(async (blob) => {
+        await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+        alert("Image copied to clipboard!");
+      });
+    });
+
+    clearButton.addEventListener("click", () => {
+      ctx.clearRect(0, 0, canvas.width / scaleFactor, canvas.height / scaleFactor);
+      undoStack.length = 0;
+      redoStack.length = 0;
+    });
+  </script>
+  <center>
+    <a href="howto.html" style="
+      display: inline-block;
+      padding: 10px 20px;
+      margin-top: 20px;
+      background-color: #ffa500;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: bold;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+      transition: background-color 0.3s, box-shadow 0.3s;">
+      How to use it?
+    </a>
+  </center>
+  
+</body>
+</html>

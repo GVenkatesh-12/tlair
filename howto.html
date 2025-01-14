@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How to Use</title>
+    <style>
+        /* Base Styles */
+        body {
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .how-to {
+            max-width: 600px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #ffa500;
+            font-size: 2rem;
+            text-transform: uppercase;
+            animation: slideDown 1s ease-in-out;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        li {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: flex-start;
+            animation: fadeInUp 0.8s ease-in-out;
+        }
+
+        li strong {
+            margin-right: 10px;
+            color: #ffa500;
+        }
+
+        li:before {
+            content: '✔';
+            color: #ffa500;
+            font-size: 1.5rem;
+            margin-right: 10px;
+            animation: popIn 0.4s ease;
+        }
+
+        /* Hover Effects */
+        li:hover {
+            transform: scale(1.02);
+            transition: transform 0.3s ease;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.5); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="how-to">
+        <h2>How to Use</h2>
+        <ul>
+          <li><strong>Select a Tool:</strong> Choose the pen or eraser from the toolbar.</li>
+          <li><strong>Start Drawing:</strong> Touch the canvas and hold for 1.5 seconds until the tooltip changes color to green, then move to draw.</li>
+          <li><strong>Undo/Redo:</strong> Use the undo and redo buttons to step backward or forward through your actions.</li>
+          <li><strong>Copy Drawing:</strong> Click the copy button to save your drawing to the clipboard. Paste it into any application that supports images.</li>
+          <li><strong>Clear Canvas:</strong> Use the trash icon to clear the entire canvas.</li>
+        </ul>
+    </div>
+</body>
+</html>
